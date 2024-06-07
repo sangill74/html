@@ -1,46 +1,590 @@
-<!doctype html>
-
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>HTML Example</title>
-  
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/about.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자산 관리 프로그램</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .row {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        select, input[type="text"], input[type="password"], input[type="number"], input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .entry-date {
+            text-align: left;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .hidden {
+            display: none;
+        }
+        .title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
-  <section class="center">
-    <aside class="sidebar"></aside>
-    
-    <section class="contents">
-      <!-- page will be include here -->
-      <section id="page" class="page">
-        <section id="about">
-          <section class="frame">
-            <h2><b>HELLO</b>WORLD</h2>
-            
-            <div class="cat">
-              <div class="picture">
-                <img src="images/mew.png" alt="Mew">
-              </div>
-              <small>Mew</small>
+    <div class="container" id="loginContainer">
+        <h1>로그인</h1>
+        <div class="row">
+            <label for="loginName">이름:</label>
+            <input type="text" id="loginName" placeholder="이름 입력">
+        </div>
+        <div class="row">
+            <label for="loginPassword">비밀번호:</label>
+            <input type="password" id="loginPassword" placeholder="비밀번호 입력">
+        </div>
+        <button onclick="login()">로그인</button>
+        <button onclick="showRegister()">사용자 등록</button>
+    </div>
+
+    <div class="container hidden" id="registerContainer">
+        <h1>사용자 등록</h1>
+        <div class="row">
+            <label for="registerName">이름:</label>
+            <input type="text" id="registerName" placeholder="이름 입력">
+        </div>
+        <div class="row">
+            <label for="registerPassword">비밀번호:</label>
+            <input type="password" id="registerPassword" placeholder="비밀번호 입력">
+        </div>
+        <button onclick="register()">등록</button>
+        <button onclick="showLogin()">취소</button>
+    </div>
+
+    <div class="container hidden" id="mainContainer">
+        <div class="title-container">
+            <h1 id="mainTitle"></h1>
+            <button onclick="logout()">로그아웃</button>
+        </div>
+        <div class="row">
+            <label for="type">자산 또는 부채를 선택하세요:</label>
+            <select id="type" onchange="updateOptions()">
+                <option value="">선택하세요</option>
+                <option value="asset">자산</option>
+                <option value="liability">부채</option>
+            </select>
+        </div>
+        <div class="row">
+            <label for="category">항목을 선택하세요:</label>
+            <select id="category">
+                <option value="">선택하세요</option>
+            </select>
+        </div>
+        <div class="row">
+            <label for="details">세부사항:</label>
+            <input type="text" id="details" placeholder="세부사항 입력">
+        </div>
+        <div class="row">
+            <label for="amount">금액:</label>
+            <input type="number" id="amount" placeholder="금액 입력">
+        </div>
+        <button onclick="addEntry()">추가</button>
+
+        <div class="result">
+            <h2>결과</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>구분</th>
+                        <th>항목</th>
+                        <th>세부사항</th>
+                        <th>금액</th>
+                        <th>삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="entries">
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3">자산 금액 합계:</th>
+                        <td id="totalAssets">0 원</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th colspan="3">부채 금액 합계:</th>
+                        <td id="totalLiabilities">0 원</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th colspan="3">총 자본 합계:</th>
+                        <td id="netCapital">0 원</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="row">
+                <label for="saveDate">저장 날짜:</label>
+                <input type="date" id="saveDate">
             </div>
-            <div class="cat">
-              <div class="picture">
-                <img src="images/siesta.png" alt="Siesta">
-              </div>
-              <small>Siesta</small>
+            <button onclick="saveEntries()">저장</button>
+        </div>
+
+        <div class="result">
+            <h2>불러오기</h2>
+            <div class="row">
+                <label for="loadDate">불러올 날짜를 선택하세요:</label>
+                <select id="loadDate">
+                    <option value="">선택하세요</option>
+                </select>
             </div>
-            <div class="cat">
-              <div class="picture">
-                <img src="images/tiger.png" alt="Tiger">
-              </div>
-              <small>Tiger</small>
-            </div>
-          </section>
-        </section>
-      </section>
-    </section>
-  </section>
+            <button onclick="loadSelectedEntry()">불러오기</button>
+        </div>
+
+        <div class="result">
+            <h2>날짜별 증감 내역</h2>
+            <div id="comparisonContainer"></div>
+        </div>
+
+        <div class="result">
+            <h2>저장된 항목</h2>
+            <div id="savedEntriesContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let totalAssets = 0;
+        let totalLiabilities = 0;
+        let entries = [];
+        let savedEntries = {};
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+        let currentUser = null;
+
+        function showLogin() {
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('registerContainer').classList.add('hidden');
+            document.getElementById('mainContainer').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('registerContainer').classList.remove('hidden');
+        }
+
+        function showMain() {
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('registerContainer').classList.add('hidden');
+            document.getElementById('mainContainer').classList.remove('hidden');
+            document.getElementById('mainTitle').innerText = `${currentUser}님의 자산 관리 프로그램`;
+        }
+
+        function login() {
+            const name = document.getElementById('loginName').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (users[name] && users[name] === password) {
+                alert('로그인 성공');
+                currentUser = name;
+                loadFromLocalStorage();
+                showMain();
+            } else {
+                alert('로그인 실패: 이름 또는 비밀번호가 잘못되었습니다.');
+            }
+        }
+
+        function register() {
+            const name = document.getElementById('registerName').value;
+            const password = document.getElementById('registerPassword').value;
+
+            if (users[name]) {
+                alert('이미 존재하는 사용자입니다.');
+            } else {
+                users[name] = password;
+                localStorage.setItem('users', JSON.stringify(users));
+                alert('사용자 등록 성공');
+                showLogin();
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            showLogin();
+        }
+
+        function updateOptions() {
+            const type = document.getElementById('type').value;
+            const category = document.getElementById('category');
+            category.innerHTML = '';
+
+            let options = [];
+            if (type === 'asset') {
+                options = ['부동산', '주식', '예금', '연금', '퇴직금', '보험'];
+            } else if (type === 'liability') {
+                options = ['부동산대출', '주식대출', '예금대출', '연금대출', '퇴직금대출'];
+            }
+
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.innerHTML = option;
+                category.appendChild(opt);
+            });
+        }
+
+        function formatNumber(num) {
+            return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " 원";
+        }
+
+        function addEntry() {
+            const type = document.getElementById('type').value;
+            const category = document.getElementById('category').value;
+            const details = document.getElementById('details').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (isNaN(amount)) {
+                alert('금액을 입력하세요');
+                return;
+            }
+
+            const entry = { type, category, details, amount };
+            entries.push(entry);
+
+            if (type === 'asset') {
+                totalAssets += amount;
+            } else if (type === 'liability') {
+                totalLiabilities += amount;
+            }
+
+            renderEntries();
+        }
+
+        function deleteEntry(index) {
+            const entry = entries[index];
+            if (entry.type === 'asset') {
+                totalAssets -= entry.amount;
+            } else if (entry.type === 'liability') {
+                totalLiabilities -= entry.amount;
+            }
+
+            entries.splice(index, 1);
+            renderEntries();
+        }
+
+        function renderEntries() {
+            const entriesTbody = document.getElementById('entries');
+            entriesTbody.innerHTML = '';
+
+            entries.forEach((entry, index) => {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${entry.type === 'asset' ? '자산' : '부채'}</td>
+                    <td>${entry.category}</td>
+                    <td>${entry.details}</td>
+                    <td>${formatNumber(entry.amount)}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(${index})">삭제</button></td>
+                `;
+                entriesTbody.appendChild(newRow);
+            });
+
+            document.getElementById('totalAssets').innerText = formatNumber(totalAssets);
+            document.getElementById('totalLiabilities').innerText = formatNumber(totalLiabilities);
+            document.getElementById('netCapital').innerText = formatNumber(totalAssets - totalLiabilities);
+        }
+
+        function saveEntries() {
+            const saveDate = document.getElementById('saveDate').value;
+            if (!saveDate) {
+                alert('저장 날짜를 입력하세요');
+                return;
+            }
+
+            if (!savedEntries[saveDate]) {
+                savedEntries[saveDate] = [];
+            }
+
+            savedEntries[saveDate] = savedEntries[saveDate].concat(entries);
+            savedEntries[saveDate].sort((a, b) => a.type.localeCompare(b.type));
+
+            saveToLocalStorage();
+            renderSavedEntries();
+            renderComparison();
+            clearCurrentEntries();
+        }
+
+        function clearCurrentEntries() {
+            entries = [];
+            totalAssets = 0;
+            totalLiabilities = 0;
+            document.getElementById('entries').innerHTML = '';
+            document.getElementById('totalAssets').innerText = '0 원';
+            document.getElementById('totalLiabilities').innerText = '0 원';
+            document.getElementById('netCapital').innerText = '0 원';
+        }
+
+        function deleteSavedEntries(date) {
+            if (confirm(`${date}의 모든 항목을 삭제하시겠습니까?`)) {
+                delete savedEntries[date];
+                saveToLocalStorage();
+                renderSavedEntries();
+                renderComparison();
+            }
+        }
+
+        function renderSavedEntries() {
+            const savedEntriesContainer = document.getElementById('savedEntriesContainer');
+            const loadDateSelect = document.getElementById('loadDate');
+            savedEntriesContainer.innerHTML = '';
+            loadDateSelect.innerHTML = '<option value="">선택하세요</option>';
+
+            const sortedDates = Object.keys(savedEntries).sort((a, b) => new Date(b) - new Date(a));
+
+            for (const date of sortedDates) {
+                const entries = savedEntries[date];
+                let savedTotalAssets = 0;
+                let savedTotalLiabilities = 0;
+
+                entries.forEach(entry => {
+                    if (entry.type === 'asset') {
+                        savedTotalAssets += entry.amount;
+                    } else if (entry.type === 'liability') {
+                        savedTotalLiabilities += entry.amount;
+                    }
+                });
+
+                const dateHeader = document.createElement('div');
+                dateHeader.className = 'entry-date';
+                dateHeader.innerHTML = `
+                    <span>${date}</span>
+                    <button class="delete-btn" onclick="deleteSavedEntries('${date}')">삭제</button>
+                `;
+                savedEntriesContainer.appendChild(dateHeader);
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>구분</th>
+                            <th>항목</th>
+                            <th>세부사항</th>
+                            <th>금액</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${entries.map(entry => `
+                            <tr>
+                                <td>${entry.type === 'asset' ? '자산' : '부채'}</td>
+                                <td>${entry.category}</td>
+                                <td>${entry.details}</td>
+                                <td>${formatNumber(entry.amount)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3">자산 금액 합계:</th>
+                            <td>${formatNumber(savedTotalAssets)}</td>
+                        </tr>
+                        <tr>
+                            <th colspan="3">부채 금액 합계:</th>
+                            <td>${formatNumber(savedTotalLiabilities)}</td>
+                        </tr>
+                        <tr>
+                            <th colspan="3">총 자본 합계:</th>
+                            <td>${formatNumber(savedTotalAssets - savedTotalLiabilities)}</td>
+                        </tr>
+                    </tfoot>
+                `;
+
+                savedEntriesContainer.appendChild(table);
+
+                const option = document.createElement('option');
+                option.value = date;
+                option.innerText = date;
+                loadDateSelect.appendChild(option);
+            }
+        }
+
+        function renderComparison() {
+            const comparisonContainer = document.getElementById('comparisonContainer');
+            comparisonContainer.innerHTML = '';
+
+            const sortedDates = Object.keys(savedEntries).sort((a, b) => new Date(b) - new Date(a));
+
+            if (sortedDates.length < 2) {
+                comparisonContainer.innerHTML = "<p>증감 내역을 표시하려면 최소한 두 날짜의 데이터가 필요합니다.</p>";
+                return;
+            }
+
+            const latestDate = sortedDates[0];
+            const previousDate = sortedDates[1];
+            const latestEntries = savedEntries[latestDate];
+            const previousEntries = savedEntries[previousDate];
+
+            let comparisonData = {};
+            let latestTotalAssets = 0;
+            let latestTotalLiabilities = 0;
+            let previousTotalAssets = 0;
+            let previousTotalLiabilities = 0;
+
+            latestEntries.forEach(entry => {
+                if (!comparisonData[entry.category]) {
+                    comparisonData[entry.category] = { latest: 0, previous: 0 };
+                }
+                comparisonData[entry.category].latest += entry.amount;
+                if (entry.type === 'asset') {
+                    latestTotalAssets += entry.amount;
+                } else if (entry.type === 'liability') {
+                    latestTotalLiabilities += entry.amount;
+                }
+            });
+
+            previousEntries.forEach(entry => {
+                if (!comparisonData[entry.category]) {
+                    comparisonData[entry.category] = { latest: 0, previous: 0 };
+                }
+                comparisonData[entry.category].previous += entry.amount;
+                if (entry.type === 'asset') {
+                    previousTotalAssets += entry.amount;
+                } else if (entry.type === 'liability') {
+                    previousTotalLiabilities += entry.amount;
+                }
+            });
+
+            const totalAssetsDifference = latestTotalAssets - previousTotalAssets;
+            const totalLiabilitiesDifference = latestTotalLiabilities - previousTotalLiabilities;
+            const netCapitalDifference = (latestTotalAssets - latestTotalLiabilities) - (previousTotalAssets - previousTotalLiabilities);
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>항목</th>
+                        <th>${latestDate}</th>
+                        <th>${previousDate}</th>
+                        <th>증감</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Object.keys(comparisonData).map(category => {
+                        const latestAmount = comparisonData[category].latest;
+                        const previousAmount = comparisonData[category].previous;
+                        const difference = latestAmount - previousAmount;
+                        return `
+                            <tr>
+                                <td>${category}</td>
+                                <td>${formatNumber(latestAmount)}</td>
+                                <td>${formatNumber(previousAmount)}</td>
+                                <td>${formatNumber(difference)}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="1">자산 금액 합계:</th>
+                        <td>${formatNumber(latestTotalAssets)}</td>
+                        <td>${formatNumber(previousTotalAssets)}</td>
+                        <td>${formatNumber(totalAssetsDifference)}</td>
+                    </tr>
+                    <tr>
+                        <th colspan="1">부채 금액 합계:</th>
+                        <td>${formatNumber(latestTotalLiabilities)}</td>
+                        <td>${formatNumber(previousTotalLiabilities)}</td>
+                        <td>${formatNumber(totalLiabilitiesDifference)}</td>
+                    </tr>
+                    <tr>
+                        <th colspan="1">총 자본 합계:</th>
+                        <td>${formatNumber(latestTotalAssets - latestTotalLiabilities)}</td>
+                        <td>${formatNumber(previousTotalAssets - previousTotalLiabilities)}</td>
+                        <td>${formatNumber(netCapitalDifference)}</td>
+                    </tr>
+                </tfoot>
+            `;
+
+            comparisonContainer.appendChild(table);
+        }
+
+        function loadSelectedEntry() {
+            const loadDate = document.getElementById('loadDate').value;
+            if (!loadDate) {
+                alert("불러올 날짜를 선택하세요.");
+                return;
+            }
+
+            const selectedEntries = savedEntries[loadDate];
+
+            entries = selectedEntries.map(entry => ({ ...entry }));
+            totalAssets = selectedEntries.reduce((sum, entry) => entry.type === 'asset' ? sum + entry.amount : sum, 0);
+            totalLiabilities = selectedEntries.reduce((sum, entry) => entry.type === 'liability' ? sum + entry.amount : sum, 0);
+
+            renderEntries();
+        }
+
+        function saveToLocalStorage() {
+            const userData = JSON.parse(localStorage.getItem('userData')) || {};
+            userData[currentUser] = savedEntries;
+            localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        function loadFromLocalStorage() {
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (userData && userData[currentUser]) {
+                savedEntries = userData[currentUser];
+                renderSavedEntries();
+                renderComparison();
+            }
+        }
+    </script>
 </body>
 </html>
